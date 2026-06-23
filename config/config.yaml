@@ -1,0 +1,36 @@
+# Configuration file for LSTM Autoencoder RS Anomaly Detection
+
+data:
+  raw_dir: "data/raw"
+  processed_dir: "data/processed"
+  events_file: "data/events/historical_events.csv"
+  features:
+    - "precipitacao"
+    - "nivel_rio"
+    - "velocidade_vento"
+    - "temperatura"
+    - "umidade"
+    - "pressao"
+    - "vazao"
+
+model:
+  timesteps: 72
+  n_features: 7
+  epochs: 50
+  batch_size: 64
+  learning_rate: 0.001
+  model_path: "models/lstm_ae_rs_v1.h5"
+  scaler_path: "models/scaler_rs_v1.pkl"
+  thresholds_path: "models/thresholds_rs_v1.json"
+
+anomaly:
+  global_percentile: 97
+  seasonal_percentile: 97
+  drift_threshold_kl: 0.1
+
+serving:
+  host: "0.0.0.0"
+  port: 8000
+  telegram_token: "YOUR_TELEGRAM_TOKEN"
+  chat_id: "YOUR_CHAT_ID"
+  defesa_civil_webhook: "https://api.defesacivil.rs.gov.br/v1/alerts/mock"

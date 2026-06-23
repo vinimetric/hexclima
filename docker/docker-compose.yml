@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  anomaly_detector_api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: lstm_ae_rs_api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Montar diretórios locais para persistência
+      - ../data:/app/data
+      - ../models:/app/models
+    environment:
+      - ENV=production
+    restart: unless-stopped
