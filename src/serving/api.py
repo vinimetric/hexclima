@@ -58,7 +58,7 @@ def startup_event():
     
     if os.path.exists(model_path):
         try:
-            model = tf.keras.models.load_model(model_path)
+            model = tf.keras.models.load_model(model_path, custom_objects={'mae': tf.keras.metrics.MeanAbsoluteError()})
             print(f"Modelo carregado de {model_path}")
         except Exception as e:
             print(f"Erro ao carregar modelo: {e}")
