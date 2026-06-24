@@ -1,41 +1,76 @@
-# HexClima 🌊🧠
-### Detecção de Anomalias Climáticas no Rio Grande do Sul via LSTM Autoencoder
+#
 
-> **Paradigma:** Aprendizado de normalidade — o modelo é treinado **exclusivamente** em períodos climáticos normais e detecta eventos extremos (enchentes, temporais) pelo alto **erro de reconstrução** das séries temporais meteorológicas e hidrológicas.
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612519115-e17b9de3-fb9b-4809-966c-9b020cb5429d.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE0NTEsIm5iZiI6MTc4MjMxMTE1MSwicGF0aCI6Ii80MzQyNDY2OS82MTI1MTkxMTUtZTE3YjlkZTMtZmI5Yi00ODA5LTk2NmMtOWIwMjBjYjU0MjlkLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MjU1MVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWYyNWQ2ZTA1YTE0OTg5YTViNzVlZTYxOTliMzQ1NzNmMGE5Y2M5YWZmZjAzMDY5NTJlNGNkMzU3OWIwM2U4NDUmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.esGAX0WSelE9pEPepGtPvYr8C9GW5qVlpETwZRTeP1M)
 
----
+### Detecção / Monitoramento de Eventos Climáticos Extremos
+
+> **Paradigma:** Aprendizado de normalidade, nesta versão o modelo é treinado **exclusivamente** em períodos climáticos normais e detecta eventos extremos (enchentes, temporais) pelo alto **erro de reconstrução** das séries temporais meteorológicas e hidrológicas.
+
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 
 ## Sumário
 
-1. [O que é o MemClimate](#o-que-é-o-memclimate)
-2. [O que o modelo faz (e o que não faz)](#o-que-o-modelo-faz-e-o-que-não-faz)
-3. [Arquitetura](#arquitetura)
-4. [Fontes de Dados](#fontes-de-dados)
-5. [Estrutura do Projeto](#estrutura-do-projeto)
-6. [Instalação e Execução](#instalação-e-execução)
-7. [API FastAPI](#api-fastapi)
-8. [Níveis de Alerta](#níveis-de-alerta)
-9. [Métricas de Avaliação](#métricas-de-avaliação)
-10. [Docker](#docker)
-11. [Roadmap](#roadmap)
-12. [Referências](#referências)
+<style>
+  .sumario-container {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .link-verde { 
+    color: #6de18b; /* Verde padrão */
+    text-decoration: none; 
+    font-weight: 500;
+    transition: color 0.2s ease, text-decoration 0.2s ease;
+  }
+  .link-verde:hover { 
+    color: #eeeeee; /* Verde mais escuro ao passar o mouse */
+    text-decoration: none; 
+  }
+  .lista-sumario {
+    list-style-type: none;
+    padding-left: 0;
+  }
+  .lista-sumario li {
+    margin-bottom: 8px;
+  }
+  .numero-item {
+    color: #757575;
+    font-weight: bold;
+    margin-right: 5px;
+  }
+</style>
 
----
+<div class="sumario-container">
+  <ol class="lista-sumario">
+    <li><span class="numero-item">1.</span><a href="#o-que-é-o-memclimate" class="link-verde">O que é o HexClimate</a></li>
+    <li><span class="numero-item">2.</span><a href="#o-que-o-modelo-faz-e-o-que-não-faz" class="link-verde">O que o modelo faz?</a></li>
+    <li><span class="numero-item">3.</span><a href="#arquitetura" class="link-verde">Arquitetura</a></li>
+    <li><span class="numero-item">4.</span><a href="#fontes-de-dados" class="link-verde">Datasets</a></li>
+    <li><span class="numero-item">5.</span><a href="#estrutura-do-projeto" class="link-verde">Estrutura do Projeto</a></li>
+    <li><span class="numero-item">6.</span><a href="#instalação-e-execução" class="link-verde">Executando o Projeto</a></li>
+    <li><span class="numero-item">7.</span><a href="#api-fastapi" class="link-verde">API FastAPI</a></li>
+    <li><span class="numero-item">8.</span><a href="#níveis-de-alerta" class="link-verde">Níveis de Alerta</a></li>
+    <li><span class="numero-item">9.</span><a href="#métricas-de-avaliação" class="link-verde">Métricas de Avaliação</a></li>
+    <li><span class="numero-item">10.</span><a href="#docker" class="link-verde">Docker</a></li>
+    <li><span class="numero-item">11.</span><a href="#roadmap" class="link-verde">Roadmap</a></li>
+    <li><span class="numero-item">12.</span><a href="#referências" class="link-verde">Referências</a></li>
+  </ol>
+</div>
+
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 
 ## O que é o HexClima
 
 O **HexClima** é um sistema de monitoramento climático em tempo real baseado em aprendizado de máquina para o Rio Grande do Sul. Ele utiliza um **LSTM Autoencoder** que aprende os padrões normais de comportamento climático e hidrológico ao longo de anos de dados históricos. Quando o padrão atual desvia significativamente do que o modelo aprendeu como "normal", um alerta é disparado.
 
-O nome une **Hexa** (hexagonal, referenciando a estrutura em rede das bacias hidrográficas e a topologia dos dados) com **Clima** (domínio de aplicação) — o modelo mapeia a malha climática do RS como uma grade hexagonal de memória temporal.
 
-### Evento-alvo de validação
+### Evento de validação
 O sistema foi validado contra a **Grande Enchente do RS de Maio de 2024** — o maior desastre climático da história do estado, afetando mais de 220 municípios.
 
----
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 
-## O que o modelo faz (e o que não faz)
+## O que o modelo faz?
 
-### ✅ Capacidades atuais
+### _Capacidades atuais
 
 | Capacidade | Detalhe |
 |---|---|
@@ -43,11 +78,11 @@ O sistema foi validado contra a **Grande Enchente do RS de Maio de 2024** — o 
 | **Alerta antecipado implícito** | Detecta a deterioração gradual das condições **antes** do pico da enchente (lead time emergente) |
 | **Classificação de severidade** | Quatro níveis: NORMAL → ATENÇÃO → ALERTA → EMERGÊNCIA |
 | **Thresholds sazonais** | Limites adaptados por estação (verão chuvoso vs. inverno seco do RS) |
-| **Explicabilidade por feature** | Identifica qual variável (chuva, nível do rio, pressão...) mais contribui para o alerta |
+| **Explicabilidade por feature** | Identifica qual featire (chuva, nível do rio, pressão...) mais contribui para o alerta |
 | **Detecção de data drift** | Monitora se a distribuição dos dados mudou e o modelo precisa ser retreinado |
 | **API REST em tempo real** | Inferência via FastAPI com documentação interativa (Swagger) |
 
-### ❌ Limitações atuais (fora do escopo v1)
+### _Limitações atuais (fora do escopo v0.1.0)
 
 | Limitação | Explicação |
 |---|---|
@@ -58,22 +93,32 @@ O sistema foi validado contra a **Grande Enchente do RS de Maio de 2024** — o 
 
 > Veja o [Roadmap](#roadmap) para as extensões planejadas que cobrem estas capacidades.
 
----
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 
 ## Arquitetura
 
-### Diagrama do LSTM Autoencoder
+Em nosso problema, lidamos com dados de séries temporais multivariadas. Dados de séries temporais multivariadas contêm múltiplas variáveis ​​observadas ao longo de um período de tempo. Construimos um autoencoder LSTM sobre essas séries temporais multivariadas para realizar a classificação de eventos raros. Isso é feito utilizando uma abordagem de detecção de anomalias.
 
-```
-  Input            Encoder               Bottleneck       Decoder              Output
-(72h, 7F)  →  LSTM(128) → LSTM(64)  →  Dense(32)  →  RepeatVec → LSTM(64) → LSTM(128) → Dense(7F)
-                                           ↑
-                                    Representação latente
-                                    do padrão "normal"
+Construímos um autoencoder com os dados normais, utilizamos para reconstruir as 72h passadas, se o erro de reconstrução for alto, classificamos a amostra como anômala.
+
+
+### Diagrama do LSTM Autoencoder
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612547167-74e0f848-daa2-4fec-a3ef-34b27a145bfe.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTQ1NjAsIm5iZiI6MTc4MjMxNDI2MCwicGF0aCI6Ii80MzQyNDY2OS82MTI1NDcxNjctNzRlMGY4NDgtZGFhMi00ZmVjLWEzZWYtMzRiMjdhMTQ1YmZlLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE1MTc0MFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWI3YWU5NjAwN2IxZWVmOWE1MWFhOTBlMjdiM2VlZTdkNGMzY2FmNWQ4OWZmNjliZTNjZmQ1MGUwMzljNjI0NDAmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.7WPv1SHRh6uznHg4lqD1AiDRLEO3K76A2G3LhLDcyX8)
+```py
 
   Erro de Reconstrução (MAE) = |Input - Output|
+  
   Se erro > threshold sazonal → ANOMALIA
+
 ```
+
+### Uma breve recapitulação sobre LSTM:
+
+A LSTM é um tipo de Rede Neural Recorrente (RNN). As RNNs, de modo geral, e as LSTMs, especificamente, são utilizadas com dados sequenciais ou séries temporais.
+Esses modelos são capazes de extrair automaticamente o efeito de eventos passados.
+As LSTMs são conhecidas por sua capacidade de extrair efeitos tanto de longo quanto de curto prazo de eventos passados.
+
+
 
 ### Variantes disponíveis
 
@@ -82,6 +127,7 @@ O sistema foi validado contra a **Grande Enchente do RS de Maio de 2024** — o 
 | `classic` | `architecture.py` | Padrão — melhor custo/benefício |
 | `bidirectional` | `architecture.py` | +10–15% precisão, mais lento |
 | `conv_lstm` | `architecture.py` | Dados com padrões locais diários/semanais |
+> Outras arquiteturas serão exploradas, Veja o [Roadmap](#roadmap) para mais detalhes.
 
 ### Janelamento temporal
 
@@ -90,7 +136,7 @@ Dado bruto horário  →  Janelas deslizantes de 72h  →  Autoencoder
    (stride = 1h)              (N, 72, 7)
 ```
 
----
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 
 ## Fontes de Dados
 
@@ -104,7 +150,7 @@ Dado bruto horário  →  Janelas deslizantes de 72h  →  Autoencoder
 
 > **Nota:** Os scripts de ingestão incluem um gerador de dados sintéticos fisicamente consistentes como fallback, permitindo rodar o sistema completo sem acesso às APIs externas.
 
----
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 
 ## Estrutura do Projeto
 
@@ -159,7 +205,7 @@ lstm_autoencoder_rs/          ← raiz do projeto (MemClimate)
 └── README.md
 ```
 
----
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 
 ## Instalação e Execução
 
@@ -175,7 +221,7 @@ lstm_autoencoder_rs/          ← raiz do projeto (MemClimate)
 conda create -n hexclima python=3.10
 conda activate hexclima
 
-# Com pip puro
+# Com pip
 python -m venv .venv && .venv\Scripts\activate  # Windows
 ```
 
@@ -216,7 +262,7 @@ conda run -n hexclima python -m uvicorn src.serving.api:app --host 127.0.0.1 --p
 
 Acesse a documentação interativa: **http://127.0.0.1:8000/docs**
 
----
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 
 ## API FastAPI
 
@@ -272,32 +318,32 @@ Retorna métricas de classificação (F2-score, AUROC) e operacionais (Lead Time
 Detecta desvio estatístico (KL-divergence) nas features em relação ao conjunto de treino.
 Retorna `recommend_retraining: true` se ≥ 2 features apresentarem drift significativo.
 
----
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 
 ## Níveis de Alerta
 
 Alinhados ao protocolo da **Defesa Civil do Rio Grande do Sul**:
 
-| Nível | Threshold | Ação recomendada |
+| Nível | Threshold | Exemplo de Ação |
 |---|---|---|
-| 🟢 **NORMAL** | erro < p95 | Monitoramento de rotina |
+| 🟢 **NORMAL** | erro < p95 | Nada a fazer / monitoramento de rotina |
 | 🟡 **ATENÇÃO** | p95 ≤ erro < p97 | Notificar equipe técnica, aumentar frequência de leitura |
-| 🟠 **ALERTA** | p97 ≤ erro < p99 | Acionar Defesa Civil, pré-posicionar equipes |
-| 🔴 **EMERGÊNCIA** | erro ≥ p99 | Evacuar áreas de risco, ativar protocolo de crise |
+| 🟠 **ALERTA** | p97 ≤ erro < p99 | Acionar Defesa Civil |
+| 🔴 **EMERGÊNCIA** | erro ≥ p99 | Protocolo de crise |
 
----
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 
 ## Métricas de Avaliação
 
 | Métrica | Prioridade | Justificativa |
 |---|---|---|
-| **F2-score** | 🥇 Principal | Contexto de vida/morte — recall vale 2× mais que precision |
-| **Lead Time (h)** | 🥇 Principal | Mínimo operacional: 6h antes do pico (padrão Defesa Civil RS) |
-| **False Alarm Rate** | 🥈 Secundária | Alarmes falsos destroem a credibilidade do sistema |
+| **F2-score** | 🥇 Principal | Garantir nenhum Falso Negativo|
+| **Lead Time (h)** | 🥇 Principal | Mínimo operacional: predição ~6h antes do pico (padrão Defesa Civil RS) |
+| **False Alarm Rate** | 🥈 Secundária | Alarmes falsos invalida a credibilidade do sistema |
 | **AUROC / AUPRC** | 🥈 Secundária | Independente de threshold, ideal para comparar variantes |
-| **Accuracy** | 🥉 Ignorar | Inútil com classes fortemente desbalanceadas |
+| **Accuracy** | 🥉 Ignorar | Exemplo de metrica que não é util (classes fortemente desbalanceadas) |
 
----
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 
 ## Docker
 
@@ -310,8 +356,7 @@ docker-compose -f docker/docker-compose.yml up --build -d
 
 Os diretórios `data/` e `models/` são montados como volumes persistentes.
 
----
-
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 ## Roadmap
 
 ### v1 — Atual ✅
@@ -332,7 +377,7 @@ Os diretórios `data/` e `models/` são montados como volumes persistentes.
 - [ ] GNN (Graph Neural Network) sobre rede de drenagem urbana
 - [ ] Calibração por bacia hidrográfica individual
 
----
+![Description of image](https://private-user-images.githubusercontent.com/43424669/612522697-3b2a214d-ddb3-4507-9ed4-9575e30528a7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTE3ODgsIm5iZiI6MTc4MjMxMTQ4OCwicGF0aCI6Ii80MzQyNDY2OS82MTI1MjI2OTctM2IyYTIxNGQtZGRiMy00NTA3LTllZDQtOTU3NWUzMDUyOGE3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE0MzEyOFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTBiOGQ3NmIzYmI5YjVjN2Y4MmU4MjhkMzg3MDZkMTY4MzFiMTA1NDQ5Y2Q4ZmI0MDljZjJlMTcyZDc4YjkwODEmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.h7394RV9uefR2PwrQmAYb9ZlrpqMVjBgH9PtUQKFUTA)
 
 ## Referências
 
