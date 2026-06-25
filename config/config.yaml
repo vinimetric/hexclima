@@ -12,10 +12,12 @@ data:
     - "umidade"
     - "pressao"
     - "vazao"
+    - "precip_24h"
+    - "nivel_rio_ma_48h"
 
 model:
   timesteps: 72
-  n_features: 7
+  n_features: 9
   epochs: 50
   batch_size: 64
   learning_rate: 0.001

@@ -60,7 +60,21 @@ def run_preprocessing():
     
     print("Mesclando dados meteorológicos e hidrológicos...")
     df_merged = pd.merge(df_inmet, df_ana, on='timestamp', how='outer').sort_values('timestamp')
-    
+
+    # --- Engenharia de Features ---
+    print("Criando features de acumulados e médias móveis...")
+    # Precipitação acumulada nas últimas 24h
+    if 'precipitacao' in df_merged.columns:
+        df_merged['precip_24h'] = df_merged['precipitacao'].rolling(window=24).sum()
+
+    # Média móvel do nível do rio nas últimas 48h (tendência)
+    if 'nivel_rio' in df_merged.columns:
+        df_merged['nivel_rio_ma_48h'] = df_merged['nivel_rio'].rolling(window=48).mean()
+
+    # Atualiza a lista de features para incluir as novas
+    # Note: Isso assume que config['data']['features'] será atualizado no YAML
+    # Mas aqui garantimos que as novas colunas existam antes de handle_missing
+
     # Tratamento de valores ausentes
     df_merged[features] = handle_missing(df_merged[features])
     

@@ -25,7 +25,7 @@ def load_config():
     with open(CONFIG_PATH, 'r') as f:
         return yaml.safe_load(f)
 
-def compute_reconstruction_errors(model, X):
+def compute_reconstruction_errors_MAE(model, X):
     """
     Calcula o MAE médio por amostra.
     """
@@ -61,12 +61,14 @@ def run_training():
     processed_dir = os.path.join(script_dir, '..', '..', 'data', 'processed')
     df_train = pd.read_csv(os.path.join(processed_dir, "train.csv"))
     df_val_labeled = pd.read_csv(os.path.join(processed_dir, "val_labeled.csv"))
-    
+
     print("Gerando sequências temporais...")
-    X_train = create_sequences(df_train, features, window=window)
+    X_train = create_sequences(df_train, features, window=window) #  --> (N, window, n_features)
+    print(f"X_train shape: {X_train.shape}")
     
     # Gerar sequências de validação (completo)
     X_val_all = create_sequences(df_val_labeled, features, window=window)
+
     # Timestamps correspondentes ao fim de cada janela de 72h
     val_timestamps = pd.to_datetime(df_val_labeled['timestamp'].values[window-1:])
     val_is_anomaly = df_val_labeled['is_anomaly'].values[window-1:]
@@ -128,7 +130,7 @@ def run_training():
     
     # 4. Cálculo de Thresholds (usando a validação NORMAL)
     print("Calculando erros de reconstrução na validação normal para calibração do threshold...")
-    val_normal_errors = compute_reconstruction_errors(best_model, X_val_normal)
+    val_normal_errors = compute_reconstruction_errors_MAE(best_model, X_val_normal)
     
     # Threshold Global (Percentil 97 na validação normal)
     p97_global = float(np.percentile(val_normal_errors, config['anomaly']['global_percentile']))

@@ -6,6 +6,7 @@ from datetime import datetime
 
 from src.model.anomaly import detect_anomaly
 from src.serving.alerts import dispatch_alert
+from src.data.preprocess import handle_missing
 
 CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "config", "config.yaml")
 
@@ -39,7 +40,10 @@ def inference_pipeline(latest_data: pd.DataFrame,
         
     # 1. Seleciona as últimas 72 horas de features
     window_raw = latest_data.iloc[-timesteps:][features].copy()
-    
+
+    # 1b. Imputação de NaNs para garantir estabilidade da inferência
+    window_raw = handle_missing(window_raw)
+
     # 2. Normaliza a janela usando o scaler
     window_scaled = scaler.transform(window_raw)
     

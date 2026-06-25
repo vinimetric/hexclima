@@ -56,7 +56,7 @@ O sistema foi validado contra a **Grande Enchente do RS de Maio de 2024** — o 
 
 | Limitação | Explicação |
 |---|---|
-| **Previsão futura explícita** | O modelo detecta o estado *presente*, não prevê "em 2h haverá anomalia" (requer arquitetura Seq2Seq) |
+| **Previsão futura explícita** | O modelo detecta o estado *presente*, não prevê "em 2h haverá anomalia" (requer Seq2Seq?) |
 | **Mapa de risco por rua** | Sem componente espacial/GIS — não indica qual rua específica vai alagar |
 | **Tempo até o alagamento** | Não estima "Rua X alaga em ~35 min" (requer dados geoespaciais + modelo supervisionado) |
 | **Inferência hiperlocal** | Sem Modelo Digital de Terreno (MDT) integrado |
@@ -127,7 +127,7 @@ Dado bruto horário  →  Janelas deslizantes de 72h  →  Autoencoder
 ## Estrutura do Projeto
 
 ```
-lstm_autoencoder_rs/          ← raiz do projeto (MemClimate)
+hive_lstm_autoencoder_rs/          ← raiz do projeto (hexclima)
 │
 ├── config/
 │   └── config.yaml           # Hiperparâmetros, features, thresholds e caminhos
@@ -297,7 +297,7 @@ Retorna `recommend_retraining: true` se ≥ 2 features apresentarem drift signif
 
 ## Níveis de Alerta
 
-Alinhados ao protocolo da **Defesa Civil do Rio Grande do Sul**:
+Devemos alinhar ao protocolo da **Defesa Civil do Rio Grande do Sul**:
 
 | Nível | Threshold | Exemplo de Ação |
 |---|---|---|
