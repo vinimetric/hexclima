@@ -2,9 +2,9 @@
 
 <img alt="Image" src="https://github.com/user-attachments/assets/e17b9de3-fb9b-4809-966c-9b020cb5429d" />
 
-### Detecção / Monitoramento de Eventos Climáticos Extremos
+### Monitoramento de Eventos Climáticos
 
-> **Paradigma:** Aprendizado de normalidade, nesta versão o modelo é treinado **exclusivamente** em períodos climáticos normais e detecta eventos extremos (enchentes, temporais) pelo alto **erro de reconstrução** das séries temporais meteorológicas e hidrológicas.
+> Análise, previsão, detecção de eventos extremos
 
 <img alt="Image" src="https://github.com/user-attachments/assets/3b2a214d-ddb3-4507-9ed4-9575e30528a7" />
 
@@ -29,8 +29,12 @@
 
 ## O que é o HexClima
 
-O **HexClima** é um sistema de monitoramento climático em tempo real baseado em aprendizado de máquina para o Rio Grande do Sul. Ele utiliza um **LSTM Autoencoder** que aprende os padrões normais de comportamento climático e hidrológico ao longo de anos de dados históricos. Quando o padrão atual desvia significativamente do que o modelo aprendeu como "normal", um alerta é disparado.
+O **HexClima** é um sistema de monitoramento climático em tempo real baseado em aprendizado de máquina. 
 
+### Análise de Eventos Extremos
+Utilizando um **LSTM-Autoencoder** que aprende os padrões normais de comportamento climático e hidrológico ao longo de anos de dados históricos. Quando o padrão atual desvia significativamente do que o modelo aprendeu como "normal", obtemos um resultado de anomalia dos dados e portanto podemos classificar com [níveis de alerta](#níveis-de-alerta).
+
+> **Paradigma:** Aprendizado de normalidade, com uma versão LSTM-autoencoder o modelo é treinado **exclusivamente** em períodos climáticos normais e detecta eventos extremos (enchentes, temporais) pelo alto **erro de reconstrução** das séries temporais meteorológicas e hidrológicas treinado pelo autoencoder.
 
 ### Evento de validação
 O sistema foi validado contra a **Grande Enchente do RS de Maio de 2024** — o maior desastre climático da história do estado, afetando mais de 220 municípios.
@@ -56,7 +60,7 @@ O sistema foi validado contra a **Grande Enchente do RS de Maio de 2024** — o 
 
 | Limitação | Explicação |
 |---|---|
-| **Previsão futura explícita** | O modelo detecta o estado *presente*, não prevê "em 2h haverá anomalia" (requer Seq2Seq?) |
+| **Previsão** | O modelo detecta o estado *presente*, não prevê "em Xh haverá anomalia" (requer Seq2Seq?) |
 | **Mapa de risco por rua** | Sem componente espacial/GIS — não indica qual rua específica vai alagar |
 | **Tempo até o alagamento** | Não estima "Rua X alaga em ~35 min" (requer dados geoespaciais + modelo supervisionado) |
 | **Inferência hiperlocal** | Sem Modelo Digital de Terreno (MDT) integrado |
@@ -66,20 +70,20 @@ O sistema foi validado contra a **Grande Enchente do RS de Maio de 2024** — o 
 <img alt="Image" src="https://github.com/user-attachments/assets/3b2a214d-ddb3-4507-9ed4-9575e30528a7" />
 
 
-## Arquitetura
+## Arquitetura LSTM Autoencoder
 
 Em nosso problema, lidamos com dados de séries temporais multivariadas. Dados de séries temporais multivariadas contêm múltiplas variáveis ​​observadas ao longo de um período de tempo. Construimos um autoencoder LSTM sobre essas séries temporais multivariadas para realizar a classificação de eventos raros. Isso é feito utilizando uma abordagem de detecção de anomalias.
 
 Construímos um autoencoder com os dados normais, utilizamos para reconstruir as 72h passadas, se o erro de reconstrução for alto, classificamos a amostra como anômala.
 
 
-### Diagrama do LSTM Autoencoder
-![Description of image](https://private-user-images.githubusercontent.com/43424669/612547167-74e0f848-daa2-4fec-a3ef-34b27a145bfe.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3ODIzMTQ1NjAsIm5iZiI6MTc4MjMxNDI2MCwicGF0aCI6Ii80MzQyNDY2OS82MTI1NDcxNjctNzRlMGY4NDgtZGFhMi00ZmVjLWEzZWYtMzRiMjdhMTQ1YmZlLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjA2MjQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwNjI0VDE1MTc0MFomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWI3YWU5NjAwN2IxZWVmOWE1MWFhOTBlMjdiM2VlZTdkNGMzY2FmNWQ4OWZmNjliZTNjZmQ1MGUwMzljNjI0NDAmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0JnJlc3BvbnNlLWNvbnRlbnQtdHlwZT1pbWFnZSUyRnBuZyJ9.7WPv1SHRh6uznHg4lqD1AiDRLEO3K76A2G3LhLDcyX8)
+### Diagrama
+<img alt="Image" src="https://github.com/user-attachments/assets/74e0f848-daa2-4fec-a3ef-34b27a145bfe" />
+
 ```py
 
   Erro de Reconstrução (MAE) = |Input - Output|
-  
-  Se erro > threshold sazonal → ANOMALIA
+  erro > threshold sazonal → ANOMALIA
 
 ```
 

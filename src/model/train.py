@@ -39,12 +39,25 @@ def get_season(month: int) -> str:
     if month in [6, 7, 8]:   return 'inverno'
     return 'primavera'
 
+def create_sequences_joint(df, features, window=72, future_steps=12, stride=1):
+    """
+    Cria sequências temporais de entrada e os alvos futuros para forecasting.
+    """
+    data = df[features].values
+    X = []
+    Y = []
+    for i in range(0, len(data) - window - future_steps + 1, stride):
+        X.append(data[i:i + window])
+        Y.append(data[i + window:i + window + future_steps])
+    return np.array(X), np.array(Y)
+
 def run_training():
     config = load_config()
     
     processed_dir = config['data']['processed_dir']
     features = config['data']['features']
     window = config['model']['timesteps']
+    future_steps = config['model'].get('future_steps', 0)
     n_features = len(features)
     
     # Parâmetros de treino
@@ -62,31 +75,45 @@ def run_training():
     df_train = pd.read_csv(os.path.join(processed_dir, "train.csv"))
     df_val_labeled = pd.read_csv(os.path.join(processed_dir, "val_labeled.csv"))
 
-    print("Gerando sequências temporais...")
-    X_train = create_sequences(df_train, features, window=window) #  --> (N, window, n_features)
+    print(f"Gerando sequencias temporais (future_steps={future_steps})...")
+    if future_steps > 0:
+        X_train, Y_train_fore = create_sequences_joint(df_train, features, window=window, future_steps=future_steps)
+        X_val_all, Y_val_all_fore = create_sequences_joint(df_val_labeled, features, window=window, future_steps=future_steps)
+        # Slicing timestamps and labels to match the joint sequences
+        val_timestamps = pd.to_datetime(df_val_labeled['timestamp'].values[window-1 : -future_steps])
+        val_is_anomaly = df_val_labeled['is_anomaly'].values[window-1 : -future_steps]
+    else:
+        X_train = create_sequences(df_train, features, window=window)
+        X_val_all = create_sequences(df_val_labeled, features, window=window)
+        val_timestamps = pd.to_datetime(df_val_labeled['timestamp'].values[window-1:])
+        val_is_anomaly = df_val_labeled['is_anomaly'].values[window-1:]
+
     print(f"X_train shape: {X_train.shape}")
     
-    # Gerar sequências de validação (completo)
-    X_val_all = create_sequences(df_val_labeled, features, window=window)
-
-    # Timestamps correspondentes ao fim de cada janela de 72h
-    val_timestamps = pd.to_datetime(df_val_labeled['timestamp'].values[window-1:])
-    val_is_anomaly = df_val_labeled['is_anomaly'].values[window-1:]
-    
     # Para o treinamento do autoencoder, usamos todo o conjunto de treino
-    # (que por definição da divisão temporal contém apenas anos considerados normais: 2018-2022)
-    # E para validação durante o treino, usamos apenas a parte NORMAL do conjunto de validação
-    # para evitar vazamento do evento anômalo nas métricas de convergência
+    # E para validacao durante o treino, usamos apenas a parte NORMAL do conjunto de validacao
     normal_val_mask = (val_is_anomaly == 0)
     X_val_normal = X_val_all[normal_val_mask]
     
-    print(f"Shapes das sequências - X_train: {X_train.shape}, X_val_normal: {X_val_normal.shape}")
+    if future_steps > 0:
+        Y_val_normal_fore = Y_val_all_fore[normal_val_mask]
+        print(f"Shapes das sequencias - X_train: {X_train.shape}, Y_train_fore: {Y_train_fore.shape}, X_val_normal: {X_val_normal.shape}")
+    else:
+        print(f"Shapes das sequencias - X_train: {X_train.shape}, X_val_normal: {X_val_normal.shape}")
     
-    # 3. Construção do modelo
+    # 3. Construcao do modelo
     print("Construindo o LSTM Autoencoder...")
-    # Podemos passar a variante aqui (padrão classic, configurável)
-    model = build_lstm_autoencoder(timesteps=window, n_features=n_features, variant="classic")
-    model.compile(optimizer=Adam(learning_rate=lr), loss='mae')
+    model = build_lstm_autoencoder(timesteps=window, n_features=n_features, variant="classic", future_steps=future_steps)
+    
+    if future_steps > 0:
+        model.compile(
+            optimizer=Adam(learning_rate=lr),
+            loss={'output_recon': 'mae', 'output_fore': 'mae'},
+            loss_weights={'output_recon': 1.0, 'output_fore': 1.0}
+        )
+    else:
+        model.compile(optimizer=Adam(learning_rate=lr), loss='mae')
+        
     model.summary()
     
     # Definindo Callbacks
@@ -114,22 +141,34 @@ def run_training():
     
     # Treinamento
     print("Iniciando o treinamento...")
-    history = model.fit(
-        X_train, X_train,
-        epochs=epochs,
-        batch_size=batch_size,
-        validation_data=(X_val_normal, X_val_normal),
-        callbacks=callbacks,
-        shuffle=True
-    )
+    if future_steps > 0:
+        history = model.fit(
+            X_train, {'output_recon': X_train, 'output_fore': Y_train_fore},
+            epochs=epochs,
+            batch_size=batch_size,
+            validation_data=(X_val_normal, {'output_recon': X_val_normal, 'output_fore': Y_val_normal_fore}),
+            callbacks=callbacks,
+            shuffle=True,
+            verbose=2
+        )
+    else:
+        history = model.fit(
+            X_train, X_train,
+            epochs=epochs,
+            batch_size=batch_size,
+            validation_data=(X_val_normal, X_val_normal),
+            callbacks=callbacks,
+            shuffle=True,
+            verbose=2
+        )
     
     print(f"Modelo salvo em {model_path}")
     
-    # Recarregar o melhor modelo
-    best_model = tf.keras.models.load_model(model_path)
+    # Recarregar o melhor modelo (carrega sem compilar pois so faremos inferenca)
+    best_model = tf.keras.models.load_model(model_path, compile=False)
     
-    # 4. Cálculo de Thresholds (usando a validação NORMAL)
-    print("Calculando erros de reconstrução na validação normal para calibração do threshold...")
+    # 4. Calculo de Thresholds (usando a validacao NORMAL)
+    print("Calculando erros de reconstrucao na validacao normal para calibracao do threshold...")
     val_normal_errors = compute_reconstruction_errors_MAE(best_model, X_val_normal)
     
     # Threshold Global (Percentil 97 na validação normal)

@@ -58,7 +58,7 @@ def startup_event():
     
     if os.path.exists(model_path):
         try:
-            model = tf.keras.models.load_model(model_path, custom_objects={'mae': tf.keras.metrics.MeanAbsoluteError()})
+            model = tf.keras.models.load_model(model_path, compile=False)
             print(f"Modelo carregado de {model_path}")
         except Exception as e:
             print(f"Erro ao carregar modelo: {e}")
@@ -166,6 +166,8 @@ def get_metrics(dataset: str = "validation"):
     
     # Scores
     X_pred = model.predict(X, batch_size=128, verbose=0)
+    if isinstance(X_pred, list):
+        X_pred = X_pred[0]
     scores = np.mean(np.abs(X - X_pred), axis=(1, 2))
     
     y_true = df['is_anomaly'].values[window-1:]

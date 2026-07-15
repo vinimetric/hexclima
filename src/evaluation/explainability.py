@@ -21,7 +21,11 @@ def explain_anomaly(model, window: np.ndarray, feature_names: list) -> pd.DataFr
         window_batch = window
         window = window[0] # Pega a primeira amostra do lote para explicação
         
-    window_pred = model.predict(window_batch, verbose=0)[0]
+    preds = model.predict(window_batch, verbose=0)
+    if isinstance(preds, list):
+        window_pred = preds[0][0]
+    else:
+        window_pred = preds[0]
     
     # MAE médio ao longo do tempo (eixos da janela temporal) para cada feature
     # window shape: (timesteps, n_features), window_pred shape: (timesteps, n_features)

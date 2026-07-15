@@ -77,53 +77,86 @@ def run_preprocessing():
 
     # Tratamento de valores ausentes
     df_merged[features] = handle_missing(df_merged[features])
-    
-    # Divisão temporal:
-    # Treino: 2018-01-01 a 2022-12-31 (~5 anos de dados normais)
-    # Validação: 2023-01-01 a 2023-12-31 (Inclui o evento de Set/2023)
-    # Teste: 2024-01-01 a 2024-06-30 (Inclui o evento de Mai/2024)
-    
-    df_train = df_merged[df_merged['timestamp'] < '2023-01-01'].copy()
-    df_val = df_merged[(df_merged['timestamp'] >= '2023-01-01') & (df_merged['timestamp'] < '2024-01-01')].copy()
-    df_test = df_merged[df_merged['timestamp'] >= '2024-01-01'].copy()
-    
-    print(f"Registros - Treino: {len(df_train)}, Validação: {len(df_val)}, Teste: {len(df_test)}")
-    
-    # Normalização robusta baseada no treino
-    print("Normalizando dados usando RobustScaler...")
+
+    # ===========================================================================
+    # DIVISAO TEMPORAL ADAPTADA AOS DADOS REAIS (BDMEP-INMET 2022-2026)
+    # ===========================================================================
+    # O AE DEVE SER TREINADO EXCLUSIVAMENTE EM PERIODOS NORMAIS.
+    # Os eventos anomalos conhecidos sao excluidos do treino:
+    #   - Enchente Vale do Taquari: 2023-09-02 a 2023-09-10
+    #   - Grande Enchente RS:       2024-04-28 a 2024-05-20
+    #
+    # Particao:
+    #   Treino:    2022-01-01 -> 2023-08-31  (1 ano e 8 meses, anterior ao primeiro evento)
+    #   Validacao: 2023-09-01 -> 2023-12-31  (inclui Enchente Set/2023 para calibracao de threshold)
+    #   Teste:     2024-01-01 -> fim dos dados (inclui Grande Enchente Mai/2024)
+    # ===========================================================================
+
+    ANOMALY_PERIODS = [
+        ('2023-09-02', '2023-09-10'),   # Enchente Vale do Taquari
+        ('2024-04-28', '2024-05-20'),   # Grande Enchente RS
+    ]
+
+    df_train = df_merged[df_merged['timestamp'] < '2023-09-01'].copy()
+    df_val   = df_merged[(df_merged['timestamp'] >= '2023-09-01') & (df_merged['timestamp'] < '2024-01-01')].copy()
+    df_test  = df_merged[df_merged['timestamp'] >= '2024-01-01'].copy()
+
+    # --- Expurgo critico: remover periodos anomalos conhecidos do treino ---
+    normal_mask = pd.Series(True, index=df_train.index)
+    for start, end in ANOMALY_PERIODS:
+        anomaly_mask = (df_train['timestamp'] >= start) & (df_train['timestamp'] <= end)
+        normal_mask = normal_mask & ~anomaly_mask
+        removed = anomaly_mask.sum()
+        if removed > 0:
+            print(f"Removendo {removed} horas anomalas do treino: {start} ate {end}")
+
+    df_train = df_train[normal_mask].copy()
+
+    print(f"Registros apos expurgo - Treino: {len(df_train)}, Validacao: {len(df_val)}, Teste: {len(df_test)}")
+    print(f"  Treino cobre: {df_train['timestamp'].min()} ate {df_train['timestamp'].max()}")
+    print(f"  Validacao cobre: {df_val['timestamp'].min()} ate {df_val['timestamp'].max()}")
+    print(f"  Teste cobre: {df_test['timestamp'].min()} ate {df_test['timestamp'].max()}")
+
+    # Normalizacao robusta - fit SOMENTE no treino normal
+    print("Normalizando dados usando RobustScaler (fit apenas no treino normal)...")
     scaler = RobustScaler()
-    
-    # Fit apenas no treino
+
     df_train[features] = scaler.fit_transform(df_train[features])
-    df_val[features] = scaler.transform(df_val[features])
-    df_test[features] = scaler.transform(df_test[features])
-    
+    df_val[features]   = scaler.transform(df_val[features])
+    df_test[features]  = scaler.transform(df_test[features])
+
     # Salvar o scaler
     os.makedirs(os.path.dirname(scaler_path), exist_ok=True)
     with open(scaler_path, 'wb') as f:
         pickle.dump(scaler, f)
     print(f"RobustScaler salvo em {scaler_path}")
-    
+
     # Salvar dados processados
     os.makedirs(processed_dir, exist_ok=True)
     df_train.to_csv(os.path.join(processed_dir, "train.csv"), index=False)
     df_val.to_csv(os.path.join(processed_dir, "val.csv"), index=False)
     df_test.to_csv(os.path.join(processed_dir, "test.csv"), index=False)
-    
-    # Gerar os rótulos de validação (y_true) para avaliação posterior baseada em timestamps conhecidos
-    # O evento de Setembro de 2023 ocorreu de 2 a 10 de Setembro
-    # O evento de Maio de 2024 ocorreu de 28 de Abril a 20 de Maio
+
+    # Rotulos de anomalia para avaliacao
     df_val['is_anomaly'] = 0
-    df_val.loc[(df_val['timestamp'] >= '2023-09-02 00:00:00') & (df_val['timestamp'] <= '2023-09-10 23:00:00'), 'is_anomaly'] = 1
-    
+    df_val.loc[
+        (df_val['timestamp'] >= '2023-09-02') & (df_val['timestamp'] <= '2023-09-10 23:00:00'),
+        'is_anomaly'
+    ] = 1
+
     df_test['is_anomaly'] = 0
-    df_test.loc[(df_test['timestamp'] >= '2024-04-28 00:00:00') & (df_test['timestamp'] <= '2024-05-20 23:00:00'), 'is_anomaly'] = 1
-    
-    # Salvar com os rótulos
+    df_test.loc[
+        (df_test['timestamp'] >= '2024-04-28') & (df_test['timestamp'] <= '2024-05-20 23:00:00'),
+        'is_anomaly'
+    ] = 1
+
     df_val.to_csv(os.path.join(processed_dir, "val_labeled.csv"), index=False)
     df_test.to_csv(os.path.join(processed_dir, "test_labeled.csv"), index=False)
-    
-    print("Processamento concluído com sucesso!")
+
+    n_val_anomaly = df_val['is_anomaly'].sum()
+    n_test_anomaly = df_test['is_anomaly'].sum()
+    print(f"Rotulos: {n_val_anomaly} horas anomalas na validacao, {n_test_anomaly} no teste")
+    print("Processamento concluido com sucesso!")
 
 if __name__ == "__main__":
     run_preprocessing()

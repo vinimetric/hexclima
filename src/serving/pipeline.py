@@ -55,7 +55,7 @@ def inference_pipeline(latest_data: pd.DataFrame,
         last_timestamp = pd.Timestamp(datetime.utcnow())
         
     # 4. Inferência e Detecção de Anomalia
-    alert = detect_anomaly(model, window_scaled, thresholds, last_timestamp)
+    alert = detect_anomaly(model, window_scaled, thresholds, last_timestamp, scaler=scaler, feature_names=features)
     
     # 5. Ação baseada no nível do alerta
     if alert['level'] in ['ATENÇÃO', 'ALERTA', 'EMERGÊNCIA']:

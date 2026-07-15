@@ -2,6 +2,8 @@
 
 data:
   raw_dir: "data/raw"
+  raw_inmet_dir: "data/BDMEP-INMET_raw"
+  station_code: "A801"
   processed_dir: "data/processed"
   events_file: "data/events/historical_events.csv"
   features:
@@ -18,6 +20,7 @@ data:
 model:
   timesteps: 72
   n_features: 9
+  future_steps: 12
   epochs: 50
   batch_size: 64
   learning_rate: 0.001
