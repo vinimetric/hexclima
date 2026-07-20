@@ -30,9 +30,9 @@
 
 O **HexClima** é um sistema de monitoramento climático em tempo real. Um **LSTM Autoencoder Joint** aprende os padrões normais de comportamento meteorológico e hidrológico a partir dos dados reais das estações INMET (BDMEP). Quando o padrão atual desvia significativamente do que o modelo aprendeu como "normal", o sistema:
 
-1. **Classifica** a situação atual em um dos quatro níveis de alerta
-2. **Prevê** as próximas 12 horas de condições meteorológicas e hidrológicas
-3. **Avalia** se a janela futura prevista também é anômala — gerando um alerta proativo com lead time explícito
+1. **Classifica** a situação atual em um dos quatro níveis de alerta através de Análise de Reconstrução
+2. **Prevê** as próximas 12 a 24 horas de condições meteorológicas e hidrológicas reais através de um **Forecaster Realista** (treinado inclusive com eventos extremos)
+3. **Avalia proativamente** se a janela futura prevista constitui uma anomalia (passando a previsão pelo AE) — gerando um alerta futuro com lead time explícito
 
 > **Paradigma crítico — Treino exclusivamente em dados normais:** Todos os períodos de eventos extremos conhecidos são **explicitamente removidos** do conjunto de treino antes da normalização. O `RobustScaler` é ajustado **somente** no conjunto de treino limpo. Isso garante que o alto erro de reconstrução seja um sinal genuíno de desvio do padrão normal — e não um padrão aprendido.
 
@@ -72,45 +72,40 @@ O **HexClima** é um sistema de monitoramento climático em tempo real. Um **LST
 
 <img alt="divider" src="https://github.com/user-attachments/assets/3b2a214d-ddb3-4507-9ed4-9575e30528a7" />
 
-## Arquitetura do Modelo
+## Arquitetura do Modelo (Abordagem Desacoplada)
 
-O modelo é um **LSTM Autoencoder Joint** com aprendizado multi-tarefa (`src/model/architecture.py`). Um único Encoder compartilhado alimenta dois Decoders em paralelo.
+O sistema utiliza dois modelos trabalhando em sinergia:
+1. **Anomaly Detector (LSTM Autoencoder)**: Treinado **exclusivamente em dados normais** para reconhecer padrões saudáveis e detectar desvios (Enchentes).
+2. **Realistic Forecaster (Seq2Seq LSTM)**: Treinado em **toda a base de dados** (incluindo as anomalias e enchentes) para aprender a correlação hidrológica extrema (chuva -> inundação) e prever o futuro real.
 
-### Diagrama (variante `classic`)
+### Diagrama da Sinergia
 
 ```
-Input (72, 9)
-     |
-     +-- LSTM(128, dropout=0.2)  [enc_lstm_1]
-     +-- LSTM(64, dropout=0.2)   [enc_lstm_2]
-     +-- Dense(32, tanh)         [bottleneck]
-               |
-     +---------+---------+
-     |                   |
-     |  Reconstruction   |   Forecasting
-     |  Decoder          |   Decoder
-     |  RepeatVec(72)    |   RepeatVec(12)    <- future_steps=12
-     |  LSTM(64)         |   LSTM(64)
-     |  LSTM(128)        |   LSTM(128)
-     |  Dense(9)         |   Dense(9)
-     |  [output_recon]   |   [output_fore]
-     |                   |
-  (72, 9)             (12, 9)
-  Reconstrução        Previsão das
-  da entrada          próximas 12h
+[ Mundo Real (t-72 até t) ]
+             |
+      +------+------+
+      |             |
+[LSTM Autoenc.] [Forecaster]  <-- Previsão realista de (t até t+12)
+(Apenas normal) (Treino c/ Enchentes)
+      |             |
+[Erro Atual]  [ Janela Prevista ]
+                    |
+              [LSTM Autoenc.] <-- Analisa se o futuro será anômalo!
+                    |
+              [Erro Futuro]
 ```
 
-**Detecção de anomalia presente:**
+**Detecção de anomalia presente (AE):**
 ```
-MAE = mean(|Input - output_recon|)
+MAE = mean(|Input_Real - AE(Input_Real)|)
 MAE > threshold_sazonal  -->  ANOMALIA
 ```
 
 **Alerta futuro (lead time = 12h):**
 ```
-janela_futura = Input[-60:] + output_fore   # (72, 9) normalizado
-MAE_futuro = mean(|janela_futura - AE(janela_futura)[recon]|)
-MAE_futuro > threshold_sazonal  -->  ANOMALIA FUTURA
+janela_futura = Input_Real[-60:] + Previsao_Forecaster(12h)
+MAE_futuro = mean(|janela_futura - AE(janela_futura)|)
+MAE_futuro > threshold_sazonal  -->  ANOMALIA FUTURA GERALMENTE ANTES DO EVENTO
 ```
 
 ### Variantes disponíveis
@@ -548,12 +543,11 @@ Os diretórios `data/` e `models/` são montados como volumes persistentes no co
 - [x] Ingestão real BDMEP-INMET (`ingest_real_data.py`) — parsing do formato BDMEP, timestamps HHMM, conversão de unidades
 - [x] Simulação hidrológica acoplada à precipitação real (filtro AR, curva de chaveamento)
 - [x] Engenharia de features: `precip_24h` (rolling sum 24h) e `nivel_rio_ma_48h` (média móvel 48h)
-- [x] Expurgo explícito de anomalias do treino (`ANOMALY_PERIODS` em `preprocess.py`)
+- [x] Expurgo explícito de anomalias do treino do AE (`ANOMALY_PERIODS` em `preprocess.py`)
 - [x] Partição temporal correta para dados reais 2022–2026 (treino < Set/2023)
-- [x] LSTM AE Joint — encoder compartilhado + decoder de reconstrução + decoder de forecasting (12h)
-- [x] Treinamento multi-tarefa — losses `output_recon` + `output_fore` com pesos iguais
-- [x] Validação durante treino somente em janelas normais da validação
-- [x] Alerta futuro (`future_anomaly`) na API com `lead_time_hours` explícito
+- [x] LSTM AE Clássico para extração de Reconstruction Error e Thresholding sazonal
+- [x] Arquitetura desacoplada: Criação do *Realistic Forecaster* Seq2Seq treinado em base total
+- [x] Sinergia AE + Forecaster: Alerta futuro (`future_anomaly`) na API avaliando previsão realista
 
 ### v3 — Dados Hidrológicos Reais + Espacial 🗺️
 - [ ] Integração com dados reais da ANA/CPRM (nível e vazão observados)
