@@ -109,6 +109,13 @@ def predict(payload: InferencePayload):
     data_list = [r.dict() for r in payload.records]
     df = pd.DataFrame(data_list)
     
+    # Computar features de engenharia no dataframe corrente
+    if 'precipitacao' in df.columns and 'precip_24h' not in df.columns:
+        df['precip_24h'] = df['precipitacao'].rolling(window=24, min_periods=1).sum()
+    if 'nivel_rio' in df.columns and 'nivel_rio_ma_48h' not in df.columns:
+        df['nivel_rio_ma_48h'] = df['nivel_rio'].rolling(window=48, min_periods=1).mean()
+
+    
     # Rodar o pipeline de inferência
     try:
         alert_info = inference_pipeline(df, model, scaler, thresholds)
@@ -228,11 +235,17 @@ def check_drift(payload: DriftPayload):
         raise HTTPException(status_code=404, detail="Dados de treino de referência não encontrados.")
         
     df_train = pd.read_csv(train_path)
-    
+
     # Converter dados novos
     data_list = [r.dict() for r in payload.records]
     df_current = pd.DataFrame(data_list)
-    
+
+    # Computar features de engenharia no payload corrente (mesmo procedimento do preprocess)
+    if 'precipitacao' in df_current.columns and 'precip_24h' not in df_current.columns:
+        df_current['precip_24h'] = df_current['precipitacao'].rolling(window=24, min_periods=1).sum()
+    if 'nivel_rio' in df_current.columns and 'nivel_rio_ma_48h' not in df_current.columns:
+        df_current['nivel_rio_ma_48h'] = df_current['nivel_rio'].rolling(window=48, min_periods=1).mean()
+
     # Aplicar o RobustScaler nas duas tabelas se disponível
     global scaler
     if scaler is not None:
@@ -241,18 +254,25 @@ def check_drift(payload: DriftPayload):
     else:
         df_train_scaled = df_train[features].values
         df_current_scaled = df_current[features].values
+
         
     drift_scores = {}
     for i, feature in enumerate(features):
-        # Gerar histogramas emparelhados
-        hist_ref, bins = np.histogram(df_train_scaled[:, i], bins=50, density=True)
-        hist_cur, _    = np.histogram(df_current_scaled[:, i], bins=bins, density=True)
+        # Gerar histogramas emparelhados (contagem pura para evitar divisão por zero)
+        hist_ref, bins = np.histogram(df_train_scaled[:, i], bins=50)
+        hist_cur, _    = np.histogram(df_current_scaled[:, i], bins=bins)
 
-        # Adiciona epsilon para evitar log(0)
-        hist_ref = hist_ref + 1e-10
-        hist_cur = hist_cur + 1e-10
+        # Adiciona epsilon para evitar log(0) e normaliza (Laplace smoothing)
+        hist_ref = hist_ref + 1e-5
+        hist_cur = hist_cur + 1e-5
+        
+        hist_ref = hist_ref / hist_ref.sum()
+        hist_cur = hist_cur / hist_cur.sum()
 
         kl_div = entropy(hist_ref, hist_cur)
+        if np.isnan(kl_div) or np.isinf(kl_div):
+            kl_div = 999.0
+            
         drift_scores[feature] = {
             'kl_divergence': float(round(kl_div, 4)),
             'drift_detected': bool(kl_div > threshold_kl)

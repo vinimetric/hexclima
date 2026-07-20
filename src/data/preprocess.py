@@ -5,8 +5,17 @@ import pandas as pd
 import numpy as np
 from sklearn.preprocessing import RobustScaler
 
-# Se executado diretamente ou importado, garantir caminhos relativos consistentes
-CONFIG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "config", "config.yaml")
+# 1. Anchor the project root to the location of this specific file
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+CONFIG_PATH = os.path.join(PROJECT_ROOT, "config", "config.yaml")
+
+def load_config():
+    with open(CONFIG_PATH, 'r') as f:
+        return yaml.safe_load(f)
+
+def load_config():
+    with open(CONFIG_PATH, 'r') as f:
+        return yaml.safe_load(f)
 
 def load_config():
     with open(CONFIG_PATH, 'r') as f:
@@ -39,22 +48,24 @@ def create_sequences(df, features, window=72, stride=1):
 def run_preprocessing():
     config = load_config()
     
-    raw_dir = config['data']['raw_dir']
-    processed_dir = config['data']['processed_dir']
+    # 2. FORCE absolute paths by joining PROJECT_ROOT with the YAML paths
+    raw_dir = os.path.join(PROJECT_ROOT, config['data']['raw_dir'])
+    processed_dir = os.path.join(PROJECT_ROOT, config['data']['processed_dir'])
+    scaler_path = os.path.join(PROJECT_ROOT, config['model']['scaler_path'])
     features = config['data']['features']
-    window = config['model']['timesteps']
-    scaler_path = config['model']['scaler_path']
     
     inmet_file = os.path.join(raw_dir, "inmet.csv")
     ana_file = os.path.join(raw_dir, "ana.csv")
     
+    # Debug print to prove the path is correct
+    print(f"Loading from: {inmet_file}")
+    
     if not os.path.exists(inmet_file) or not os.path.exists(ana_file):
-        raise FileNotFoundError("Os arquivos brutos inmet.csv e ana.csv precisam ser gerados primeiro.")
+        raise FileNotFoundError(f"Missing raw files. Looked in: {raw_dir}")
         
     print("Carregando arquivos de dados brutos...")
     df_inmet = pd.read_csv(inmet_file)
     df_ana = pd.read_csv(ana_file)
-    
     df_inmet['timestamp'] = pd.to_datetime(df_inmet['timestamp'])
     df_ana['timestamp'] = pd.to_datetime(df_ana['timestamp'])
     
@@ -62,21 +73,25 @@ def run_preprocessing():
     df_merged = pd.merge(df_inmet, df_ana, on='timestamp', how='outer').sort_values('timestamp')
 
     # --- Engenharia de Features ---
-    print("Criando features de acumulados e médias móveis...")
-    # Precipitação acumulada nas últimas 24h
+    print("Criando features de acumulados e medias moveis...")
+    # Precipitacao acumulada nas ultimas 24h
+    # min_periods=1 evita NaN nas primeiras linhas (janela parcial e aceita)
     if 'precipitacao' in df_merged.columns:
-        df_merged['precip_24h'] = df_merged['precipitacao'].rolling(window=24).sum()
+        df_merged['precip_24h'] = df_merged['precipitacao'].rolling(window=24, min_periods=1).sum()
 
-    # Média móvel do nível do rio nas últimas 48h (tendência)
+    # Media movel do nivel do rio nas ultimas 48h (tendencia)
     if 'nivel_rio' in df_merged.columns:
-        df_merged['nivel_rio_ma_48h'] = df_merged['nivel_rio'].rolling(window=48).mean()
+        df_merged['nivel_rio_ma_48h'] = df_merged['nivel_rio'].rolling(window=48, min_periods=1).mean()
 
-    # Atualiza a lista de features para incluir as novas
-    # Note: Isso assume que config['data']['features'] será atualizado no YAML
-    # Mas aqui garantimos que as novas colunas existam antes de handle_missing
-
-    # Tratamento de valores ausentes
+    # Tratamento de valores ausentes residuais
     df_merged[features] = handle_missing(df_merged[features])
+
+    # Remover linhas com NaN restantes nas features (garantia final antes do split)
+    rows_before = len(df_merged)
+    df_merged = df_merged.dropna(subset=features)
+    rows_after = len(df_merged)
+    if rows_before != rows_after:
+        print(f"Removidas {rows_before - rows_after} linhas com NaN residuais nas features.")
 
     # ===========================================================================
     # DIVISAO TEMPORAL ADAPTADA AOS DADOS REAIS (BDMEP-INMET 2022-2026)
@@ -100,6 +115,9 @@ def run_preprocessing():
     df_train = df_merged[df_merged['timestamp'] < '2023-09-01'].copy()
     df_val   = df_merged[(df_merged['timestamp'] >= '2023-09-01') & (df_merged['timestamp'] < '2024-01-01')].copy()
     df_test  = df_merged[df_merged['timestamp'] >= '2024-01-01'].copy()
+    
+    # Dataset completo para o Forecaster (inclui Enchente de Setembro de 2023)
+    df_train_full = df_merged[df_merged['timestamp'] < '2024-01-01'].copy()
 
     # --- Expurgo critico: remover periodos anomalos conhecidos do treino ---
     normal_mask = pd.Series(True, index=df_train.index)
@@ -124,6 +142,7 @@ def run_preprocessing():
     df_train[features] = scaler.fit_transform(df_train[features])
     df_val[features]   = scaler.transform(df_val[features])
     df_test[features]  = scaler.transform(df_test[features])
+    df_train_full[features] = scaler.transform(df_train_full[features])
 
     # Salvar o scaler
     os.makedirs(os.path.dirname(scaler_path), exist_ok=True)
@@ -136,6 +155,7 @@ def run_preprocessing():
     df_train.to_csv(os.path.join(processed_dir, "train.csv"), index=False)
     df_val.to_csv(os.path.join(processed_dir, "val.csv"), index=False)
     df_test.to_csv(os.path.join(processed_dir, "test.csv"), index=False)
+    df_train_full.to_csv(os.path.join(processed_dir, "train_full.csv"), index=False)
 
     # Rotulos de anomalia para avaliacao
     df_val['is_anomaly'] = 0

@@ -27,9 +27,13 @@ def load_config():
 
 def compute_reconstruction_errors_MAE(model, X):
     """
-    Calcula o MAE médio por amostra.
+    Calcula o MAE medio por amostra.
+    Suporta modelos simples e Joint (saida lista [recon, fore]).
     """
     X_pred = model.predict(X, batch_size=128, verbose=0)
+    # Modelo Joint retorna lista [output_recon, output_fore] — pega so a reconstrucao
+    if isinstance(X_pred, list):
+        X_pred = X_pred[0]
     errors = np.mean(np.abs(X - X_pred), axis=(1, 2))
     return errors
 
